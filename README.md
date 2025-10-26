@@ -25,6 +25,7 @@ Offrir aux viticulteurs un **tableau de bord moderne et intuitif** permettant de
 - **Axios** pour la communication avec l’API backend
 - **React Router** pour la navigation
 - **Vite** pour le build (rapide et simple)
+- **leafletjs avec maptiler** pour la carte interactive
 
 ---
 
