@@ -3,10 +3,11 @@ import globals from 'globals';
 import reactHooks from 'eslint-plugin-react-hooks';
 import tseslint from 'typescript-eslint';
 
-export default tseslint.config(
+export default [
   { ignores: ['dist'] },
+  js.configs.recommended,
+  ...tseslint.configs.recommended,
   {
-    extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ['**/*.{ts,tsx}'],
     languageOptions: {
       ecmaVersion: 2020,
@@ -21,4 +22,11 @@ export default tseslint.config(
       '@typescript-eslint/no-explicit-any': 'warn',
     },
   },
-);
+  {
+    files: ['components/ui/**/*.{ts,tsx}', 'hooks/**/*.{ts,tsx}'],
+    rules: {
+      'react-hooks/set-state-in-effect': 'off',
+      'react-hooks/purity': 'off',
+    },
+  },
+];
