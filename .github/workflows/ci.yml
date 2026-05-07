@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./vitorga-front   
+        working-directory: ./vitorga_front   
     steps:
       - uses: actions/checkout@v4
 
@@ -21,7 +21,7 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: ./vitorga-front/package-lock.json
+          cache-dependency-path: ./vitorga_front/package-lock.json
 
       - name: Install dependencies
         run: npm ci
@@ -38,7 +38,7 @@ jobs:
     needs: [lint]
     defaults:
       run:
-        working-directory: ./vitorga-front   
+        working-directory: ./vitorga_front   
     steps:
       - uses: actions/checkout@v4
 
@@ -46,7 +46,7 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: ./vitorga-front/package-lock.json   
+          cache-dependency-path: ./vitorga_front/package-lock.json   
 
       - name: Install dependencies
         run: npm ci
@@ -57,7 +57,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: dist
-          path: vitorga-front/dist/   
+          path: vitorga_front/dist/   
 
   docker-build:
     name: Build image Docker
@@ -72,9 +72,9 @@ jobs:
       - name: Build image
         uses: docker/build-push-action@v5
         with:
-          context: ./vitorga-front 
+          context: ./vitorga_front 
           push: false
-          tags: vitorga-front:${{ github.sha }}
+          tags: vitorga_front:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           outputs: type=docker,dest=/tmp/image.tar
@@ -100,7 +100,7 @@ jobs:
       - name: Run Trivy
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: 'vitorga-front:${{ github.sha }}'
+          image-ref: 'vitorga_front:${{ github.sha }}'
           format: 'table'
           exit-code: '1'
           severity: 'CRITICAL,HIGH'
