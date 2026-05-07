@@ -13,7 +13,9 @@ RUN npm run build
 FROM nginx:alpine AS production
 LABEL maintainer="vitorga"
 
-RUN addgroup -g 1001 -S nginx-user && adduser -S nginx-user -u 1001
+RUN apk upgrade --no-cache \
+  && addgroup -g 1001 -S nginx-user \
+  && adduser -S nginx-user -u 1001
 
 COPY --from=builder /app/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
