@@ -1,34 +1,77 @@
-import { useState } from 'react'
-import { Plus, Search, MoreHorizontal, Edit, Trash2, Shield, User } from 'lucide-react'
-
-interface UserData {
-  id: number
-  nom: string
-  email: string
-  role: 'Admin' | 'Vigneron'
-  statut: 'Actif' | 'Inactif'
-  dateCreation: string
-}
-
-const usersData: UserData[] = [
-  { id: 1, nom: 'Jean Dupont', email: 'jean.dupont@vitorga.fr', role: 'Admin', statut: 'Actif', dateCreation: '15/01/2024' },
-  { id: 2, nom: 'Marie Martin', email: 'marie.martin@vitorga.fr', role: 'Vigneron', statut: 'Actif', dateCreation: '22/02/2024' },
-  { id: 3, nom: 'Pierre Durand', email: 'pierre.durand@vitorga.fr', role: 'Vigneron', statut: 'Actif', dateCreation: '08/03/2024' },
-  { id: 4, nom: 'Sophie Bernard', email: 'sophie.bernard@vitorga.fr', role: 'Admin', statut: 'Inactif', dateCreation: '14/04/2024' },
-  { id: 5, nom: 'Lucas Petit', email: 'lucas.petit@vitorga.fr', role: 'Vigneron', statut: 'Actif', dateCreation: '30/05/2024' },
-  { id: 6, nom: 'Emma Leroy', email: 'emma.leroy@vitorga.fr', role: 'Vigneron', statut: 'Actif', dateCreation: '12/06/2024' },
-  { id: 7, nom: 'Thomas Moreau', email: 'thomas.moreau@vitorga.fr', role: 'Vigneron', statut: 'Inactif', dateCreation: '25/07/2024' },
-]
+import { useState, useEffect } from 'react'
+import {
+  Plus, Search, MoreHorizontal, Edit,
+  Trash2, Shield, User, Loader2,
+} from 'lucide-react'
+import { usersApi, UserApi } from '../api/users'
 
 export default function AdminUsers() {
+  const [users, setUsers] = useState<UserApi[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [activeMenu, setActiveMenu] = useState<number | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState('')
 
-  const filteredUsers = usersData.filter(
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const data = await usersApi.getAll()
+        setUsers(data)
+      } catch {
+        setError('Impossible de charger les utilisateurs')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    void load()
+  }, [])
+
+  const handleToggleActive = async (id: number) => {
+    try {
+      const updated = await usersApi.toggleActive(id)
+      setUsers(users.map(u => u.id === id ? updated : u))
+    } catch {
+      alert('Erreur lors de la mise à jour')
+    }
+    setActiveMenu(null)
+  }
+
+  const handleDelete = async (id: number) => {
+    if (!confirm('Supprimer cet utilisateur ?')) return
+    try {
+      await usersApi.delete(id)
+      setUsers(users.filter(u => u.id !== id))
+    } catch {
+      alert('Erreur lors de la suppression')
+    }
+    setActiveMenu(null)
+  }
+
+  const filteredUsers = users.filter(
     user =>
-      user.nom.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchQuery.toLowerCase())
+      `${user.firstname} ${user.lastname}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchQuery.toLowerCase()),
   )
+
+  const activeCount = users.filter(u => u.is_active).length
+  const getRoleLabel = (user: UserApi) => user.role?.nom ?? 'Aucun rôle'
+  const isAdmin = (user: UserApi) => user.role?.id === 1 || user.role?.nom === 'Admin'
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 text-forest animate-spin" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-red-600">{error}</p>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-8">
@@ -59,11 +102,11 @@ export default function AdminUsers() {
         <div className="flex items-center gap-4">
           <div className="px-4 py-2 bg-white border-2 border-cream-dark rounded-lg">
             <span className="text-charcoal/60 text-sm">Total: </span>
-            <span className="font-semibold text-charcoal">{usersData.length}</span>
+            <span className="font-semibold text-charcoal">{users.length}</span>
           </div>
           <div className="px-4 py-2 bg-forest/10 border-2 border-forest/20 rounded-lg">
             <span className="text-forest/70 text-sm">Actifs: </span>
-            <span className="font-semibold text-forest">{usersData.filter(u => u.statut === 'Actif').length}</span>
+            <span className="font-semibold text-forest">{activeCount}</span>
           </div>
         </div>
       </div>
@@ -86,42 +129,46 @@ export default function AdminUsers() {
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-3">
                     <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                      user.role === 'Admin' ? 'bg-forest/10' : 'bg-gold/10'
+                      isAdmin(user) ? 'bg-forest/10' : 'bg-gold/10'
                     }`}>
-                      {user.role === 'Admin' ? (
+                      {isAdmin(user) ? (
                         <Shield className="w-5 h-5 text-forest" />
                       ) : (
                         <User className="w-5 h-5 text-gold-dark" />
                       )}
                     </div>
                     <div>
-                      <p className="font-medium text-charcoal">{user.nom}</p>
+                      <p className="font-medium text-charcoal">
+                        {user.firstname} {user.lastname}
+                      </p>
                       <p className="text-sm text-charcoal/60">{user.email}</p>
                     </div>
                   </div>
                 </td>
                 <td className="px-6 py-4">
                   <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                    user.role === 'Admin' 
-                      ? 'bg-forest/10 text-forest' 
+                    isAdmin(user)
+                      ? 'bg-forest/10 text-forest'
                       : 'bg-gold/10 text-gold-dark'
                   }`}>
-                    {user.role}
+                    {getRoleLabel(user)}
                   </span>
                 </td>
                 <td className="px-6 py-4">
                   <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium ${
-                    user.statut === 'Actif'
+                    user.is_active
                       ? 'bg-green-100 text-green-700'
                       : 'bg-gray-100 text-gray-600'
                   }`}>
                     <span className={`w-2 h-2 rounded-full ${
-                      user.statut === 'Actif' ? 'bg-green-500' : 'bg-gray-400'
+                      user.is_active ? 'bg-green-500' : 'bg-gray-400'
                     }`} />
-                    {user.statut}
+                    {user.is_active ? 'Actif' : 'Inactif'}
                   </span>
                 </td>
-                <td className="px-6 py-4 text-charcoal/70">{user.dateCreation}</td>
+                <td className="px-6 py-4 text-charcoal/70">
+                  {new Date(user.created_at).toLocaleDateString('fr-FR')}
+                </td>
                 <td className="px-6 py-4">
                   <div className="flex items-center justify-end relative">
                     <button
@@ -131,12 +178,18 @@ export default function AdminUsers() {
                       <MoreHorizontal className="w-5 h-5 text-charcoal/60" />
                     </button>
                     {activeMenu === user.id && (
-                      <div className="absolute top-full right-0 mt-1 bg-white border-2 border-cream-dark rounded-xl shadow-lg overflow-hidden z-10 min-w-[160px]">
-                        <button className="w-full flex items-center gap-2 px-4 py-2.5 text-left text-charcoal hover:bg-cream transition-colors">
+                      <div className="absolute top-full right-0 mt-1 bg-white border-2 border-cream-dark rounded-xl shadow-lg overflow-hidden z-10 min-w-[180px]">
+                        <button
+                          onClick={() => void handleToggleActive(user.id)}
+                          className="w-full flex items-center gap-2 px-4 py-2.5 text-left text-charcoal hover:bg-cream transition-colors"
+                        >
                           <Edit className="w-4 h-4" />
-                          Modifier
+                          {user.is_active ? 'Désactiver' : 'Activer'}
                         </button>
-                        <button className="w-full flex items-center gap-2 px-4 py-2.5 text-left text-red-600 hover:bg-red-50 transition-colors">
+                        <button
+                          onClick={() => void handleDelete(user.id)}
+                          className="w-full flex items-center gap-2 px-4 py-2.5 text-left text-red-600 hover:bg-red-50 transition-colors"
+                        >
                           <Trash2 className="w-4 h-4" />
                           Supprimer
                         </button>
