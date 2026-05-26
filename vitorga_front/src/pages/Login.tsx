@@ -1,22 +1,31 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Grape, Mail, Lock, Eye, EyeOff } from 'lucide-react'
+import { authApi } from '../api/auth'
 
 export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState('')
   const navigate = useNavigate()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-    
-    // Simulate login
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    setIsLoading(false)
-    navigate('/dashboard')
+    setError('')
+
+    try {
+      const response = await authApi.login(email, password)
+      localStorage.setItem('accessToken', response.accessToken)
+      localStorage.setItem('user', JSON.stringify(response.user))
+      navigate('/dashboard')
+    } catch (err) {
+      setError('Email ou mot de passe incorrect')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -41,7 +50,7 @@ export default function Login() {
             Gérez votre vignoble avec précision
           </h2>
           <p className="text-cream/70 text-lg max-w-md">
-            Suivez vos parcelles, optimisez vos rendements et anticipez les risques 
+            Suivez vos parcelles, optimisez vos rendements et anticipez les risques
             grâce à une plateforme complète de gestion viticole.
           </p>
           <div className="mt-12 grid grid-cols-3 gap-6">
@@ -77,6 +86,12 @@ export default function Login() {
               Accédez à votre espace de gestion
             </p>
           </div>
+
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm text-center">
+              {error}
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
