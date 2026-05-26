@@ -1,4 +1,5 @@
-import { API_URL } from './config';
+import { getAccessToken } from '../lib/auth-session';
+import { API_URL, apiFetch } from './config';
 
 export interface UserApi {
   id: number;
@@ -15,7 +16,7 @@ export interface UserApi {
 
 const getHeaders = () => ({
   'Content-Type': 'application/json',
-  Authorization: `Bearer ${localStorage.getItem('accessToken') ?? ''}`,
+  Authorization: `Bearer ${getAccessToken() ?? ''}`,
 });
 
 export const usersApi = {
@@ -35,12 +36,33 @@ export const usersApi = {
     if (!res.ok) throw new Error('Erreur mise à jour utilisateur');
     return res.json();
   },
-
+  register: async (data: {
+	firstname: string
+	lastname: string
+	email: string
+	password: string
+  }): Promise<UserApi> => {
+	const res = await fetch(`${API_URL}/auth/register`, {
+	  method: 'POST',
+	  headers: getHeaders(),
+	  body: JSON.stringify(data),
+	})
+	if (!res.ok) throw new Error('Erreur création utilisateur')
+	return res.json()
+  },
   delete: async (id: number): Promise<void> => {
     const res = await fetch(`${API_URL}/users/${id}`, {
       method: 'DELETE',
       headers: getHeaders(),
     });
     if (!res.ok) throw new Error('Erreur suppression utilisateur');
+  },
+  updateRole: async (userId: number, roleId: number): Promise<UserApi> => {
+	const res = await apiFetch(`/users/${userId}/role`, {
+	  method: 'PATCH',
+	  body: JSON.stringify({ roleId }),
+	})
+	if (!res.ok) throw new Error('Erreur mise à jour rôle')
+	return res.json()
   },
 };

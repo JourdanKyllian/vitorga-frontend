@@ -1,13 +1,11 @@
 import { API_URL } from './config';
+import { clearAuth, isTokenValid, setAuth, type AuthUser } from '../lib/auth-session';
+
+export type { AuthUser };
 
 export interface LoginResponse {
   accessToken: string;
-  user: {
-    id: number;
-    email: string;
-    firstname: string;
-    lastname: string;
-  };
+  user: AuthUser;
 }
 
 export const authApi = {
@@ -35,10 +33,15 @@ export const authApi = {
     if (!res.ok) throw new Error('Erreur inscription');
   },
 
-  logout: () => {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('user');
+  saveSession: (response: LoginResponse, remember: boolean) => {
+    setAuth(response.accessToken, response.user, remember);
   },
 
-  isAuthenticated: () => !!localStorage.getItem('accessToken'),
+  logout: () => {
+    clearAuth();
+  },
+
+  isAuthenticated: () => isTokenValid(),
 };
+
+export { clearAuth, getAccessToken, getCurrentUser, getCurrentUserRole, isTokenValid } from '../lib/auth-session';

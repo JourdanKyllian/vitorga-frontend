@@ -7,6 +7,7 @@ export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  const [rememberMe, setRememberMe] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const navigate = useNavigate()
@@ -18,8 +19,7 @@ export default function Login() {
 
     try {
       const response = await authApi.login(email, password)
-      localStorage.setItem('accessToken', response.accessToken)
-      localStorage.setItem('user', JSON.stringify(response.user))
+      authApi.saveSession(response, rememberMe)
       navigate('/dashboard')
     } catch (err) {
       setError('Email ou mot de passe incorrect')
@@ -139,7 +139,12 @@ export default function Login() {
 
             <div className="flex items-center justify-between">
               <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" className="w-4 h-4 accent-forest rounded" />
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="w-4 h-4 accent-forest rounded"
+                />
                 <span className="text-sm text-charcoal/70">Se souvenir de moi</span>
               </label>
               <a href="#" className="text-sm text-forest font-medium hover:underline">

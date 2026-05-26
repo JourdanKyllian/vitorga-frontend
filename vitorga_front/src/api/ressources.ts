@@ -1,4 +1,5 @@
-import { API_URL } from './config';
+import { getAccessToken } from '../lib/auth-session';
+import { API_URL, apiFetch } from './config';
 
 export interface Ressource {
   id: number;
@@ -15,16 +16,14 @@ export interface Ressource {
 
 const getHeaders = () => ({
   'Content-Type': 'application/json',
-  Authorization: `Bearer ${localStorage.getItem('accessToken') ?? ''}`,
+  Authorization: `Bearer ${getAccessToken() ?? ''}`,
 });
 
 export const ressourcesApi = {
   getAll: async (): Promise<Ressource[]> => {
-    const res = await fetch(`${API_URL}/ressource`, {
-      headers: getHeaders(),
-    });
-    if (!res.ok) throw new Error('Erreur chargement ressources');
-    return res.json();
+    const res = await apiFetch('/ressource')
+    if (!res.ok) throw new Error('Erreur chargement ressources')
+    return res.json()
   },
 
   create: async (data: Partial<Ressource>): Promise<Ressource> => {

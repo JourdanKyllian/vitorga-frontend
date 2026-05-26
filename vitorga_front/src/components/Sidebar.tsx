@@ -1,4 +1,5 @@
-import { NavLink } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
+import { authApi } from '../api/auth'
 import { 
   LayoutDashboard, 
   Users, 
@@ -14,6 +15,13 @@ const navItems = [
 ]
 
 export default function Sidebar() {
+  const navigate = useNavigate()
+
+  const handleLogout = () => {
+    authApi.logout()
+    navigate('/login', { replace: true })
+  }
+
   return (
     <aside className="fixed left-0 top-0 h-screen w-64 bg-forest text-cream flex flex-col">
       <div className="p-6 border-b border-forest-light">
@@ -60,13 +68,14 @@ export default function Sidebar() {
             <p className="text-xs text-cream/60">Admin</p>
           </div>
         </div>
-        <NavLink
-          to="/login"
-          className="flex items-center gap-3 px-4 py-2 text-cream/60 hover:text-gold transition-colors"
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="flex w-full items-center gap-3 px-4 py-2 text-cream/60 hover:text-gold transition-colors"
         >
           <LogOut className="w-4 h-4" />
           <span className="text-sm">Déconnexion</span>
-        </NavLink>
+        </button>
       </div>
     </aside>
   )
