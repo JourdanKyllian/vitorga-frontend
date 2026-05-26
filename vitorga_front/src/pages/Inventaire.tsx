@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react'
 import {
   Package, Wrench, AlertTriangle, TrendingDown,
-  Filter, Loader2, Plus, Minus,
+  Filter, Loader2, Plus, Minus, X,
 } from 'lucide-react'
 import { ressourcesApi, Ressource } from '../api/ressources'
-import { getCurrentUser } from '../api/auth'
+import { getCurrentUser, getCurrentUserRole } from '../api/auth'
 
 type FilterType = 'all' | 'ressource' | 'outil' | 'alerte'
 
+// ── Modal ajuster stock ──────────────────────────────────────────
 interface AdjustModalProps {
   item: Ressource
   mode: 'add' | 'remove'
@@ -21,10 +22,17 @@ function AdjustModal({ item, mode, onClose, onConfirm }: AdjustModalProps) {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
-        <h3 className="text-lg font-bold text-charcoal mb-1">
-          {mode === 'add' ? 'Ajouter du stock' : 'Retirer du stock'}
-        </h3>
-        <p className="text-charcoal/60 text-sm mb-4">{item.nom}</p>
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="text-lg font-bold text-charcoal">
+              {mode === 'add' ? 'Ajouter du stock' : 'Retirer du stock'}
+            </h3>
+            <p className="text-charcoal/60 text-sm">{item.nom}</p>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-cream rounded-lg">
+            <X className="w-5 h-5 text-charcoal/60" />
+          </button>
+        </div>
 
         <div className="mb-4">
           <label className="block text-sm font-medium text-charcoal mb-2">
@@ -68,15 +76,160 @@ function AdjustModal({ item, mode, onClose, onConfirm }: AdjustModalProps) {
   )
 }
 
+// ── Modal ajouter ressource ──────────────────────────────────────
+interface AddRessourceModalProps {
+  onClose: () => void
+  onSuccess: (item: Ressource) => void
+}
+
+function AddRessourceModal({ onClose, onSuccess }: AddRessourceModalProps) {
+  const [form, setForm] = useState({
+    nom: '',
+    categorie: 'ressource' as 'ressource' | 'outil',
+    type: '',
+    stock_actuel: 0,
+    seuil_alerte: 0,
+    unite: '',
+  })
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState('')
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsLoading(true)
+    setError('')
+    try {
+      const created = await ressourcesApi.create(form)
+      onSuccess(created)
+    } catch {
+      setError('Erreur lors de la création')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-bold text-charcoal">Nouvelle ressource</h3>
+          <button onClick={onClose} className="p-2 hover:bg-cream rounded-lg">
+            <X className="w-5 h-5 text-charcoal/60" />
+          </button>
+        </div>
+
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-charcoal mb-1">Nom *</label>
+            <input
+              type="text"
+              required
+              value={form.nom}
+              onChange={(e) => setForm({ ...form, nom: e.target.value })}
+              placeholder="Ex: Soufre en poudre"
+              className="w-full px-4 py-2.5 border-2 border-cream-dark rounded-xl focus:outline-none focus:border-forest"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-charcoal mb-1">Catégorie *</label>
+              <select
+                value={form.categorie}
+                onChange={(e) => setForm({ ...form, categorie: e.target.value as 'ressource' | 'outil' })}
+                className="w-full px-4 py-2.5 border-2 border-cream-dark rounded-xl focus:outline-none focus:border-forest bg-white"
+              >
+                <option value="ressource">Ressource</option>
+                <option value="outil">Outil</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-charcoal mb-1">Type</label>
+              <input
+                type="text"
+                value={form.type}
+                onChange={(e) => setForm({ ...form, type: e.target.value })}
+                placeholder="Ex: Traitement"
+                className="w-full px-4 py-2.5 border-2 border-cream-dark rounded-xl focus:outline-none focus:border-forest"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-charcoal mb-1">Stock initial *</label>
+              <input
+                type="number"
+                min={0}
+                required
+                value={form.stock_actuel}
+                onChange={(e) => setForm({ ...form, stock_actuel: +e.target.value })}
+                className="w-full px-4 py-2.5 border-2 border-cream-dark rounded-xl focus:outline-none focus:border-forest"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-charcoal mb-1">Seuil alerte *</label>
+              <input
+                type="number"
+                min={0}
+                required
+                value={form.seuil_alerte}
+                onChange={(e) => setForm({ ...form, seuil_alerte: +e.target.value })}
+                className="w-full px-4 py-2.5 border-2 border-cream-dark rounded-xl focus:outline-none focus:border-forest"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-charcoal mb-1">Unité *</label>
+              <input
+                type="text"
+                required
+                value={form.unite}
+                onChange={(e) => setForm({ ...form, unite: e.target.value })}
+                placeholder="kg, L..."
+                className="w-full px-4 py-2.5 border-2 border-cream-dark rounded-xl focus:outline-none focus:border-forest"
+              />
+            </div>
+          </div>
+
+          <div className="flex gap-3 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 py-2.5 border-2 border-cream-dark rounded-xl text-charcoal hover:bg-cream transition-colors"
+            >
+              Annuler
+            </button>
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="flex-1 py-2.5 bg-gold hover:bg-gold-dark text-forest font-semibold rounded-xl transition-colors disabled:opacity-50"
+            >
+              {isLoading ? 'Création...' : 'Créer'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+// ── Page principale ──────────────────────────────────────────────
 export default function Inventaire() {
   const [filter, setFilter] = useState<FilterType>('all')
   const [items, setItems] = useState<Ressource[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
   const [modal, setModal] = useState<{ item: Ressource; mode: 'add' | 'remove' } | null>(null)
+  const [showAddModal, setShowAddModal] = useState(false)
 
   const user = getCurrentUser()
-  const isAdmin = true // À remplacer par vraie vérification de rôle
+  const isAdmin = getCurrentUserRole().toLowerCase() === 'admin'
 
   useEffect(() => {
     const load = async () => {
@@ -113,6 +266,11 @@ export default function Inventaire() {
     setModal(null)
   }
 
+  const handleRessourceAdded = (newItem: Ressource) => {
+    setItems([newItem, ...items])
+    setShowAddModal(false)
+  }
+
   const getFilteredItems = () => {
     switch (filter) {
       case 'ressource': return items.filter(i => i.categorie === 'ressource')
@@ -142,12 +300,26 @@ export default function Inventaire() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold text-charcoal">Inventaire & Logistique</h1>
-        <p className="text-charcoal/60 mt-1">
-          Bonjour {user?.firstname} —{' '}
-          {isAdmin ? 'Vous pouvez ajouter et retirer du stock' : 'Vous pouvez retirer du stock'}
-        </p>
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-charcoal">Inventaire & Logistique</h1>
+          <p className="text-charcoal/60 mt-1">
+            Bonjour {user?.firstname} —{' '}
+            {isAdmin
+              ? 'Vous pouvez ajouter et retirer du stock'
+              : 'Vous pouvez retirer du stock'}
+          </p>
+        </div>
+        {isAdmin && (
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="flex items-center gap-2 px-5 py-2.5 bg-gold hover:bg-gold-dark text-forest font-semibold rounded-xl transition-colors"
+          >
+            <Plus className="w-5 h-5" />
+            Nouvelle ressource
+          </button>
+        )}
       </div>
 
       {/* Filtres */}
@@ -224,7 +396,7 @@ export default function Inventaire() {
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-xs text-charcoal/50">Seuil d&apos;alerte</p>
+                  <p className="text-xs text-charcoal/50">Seuil alerte</p>
                   <p className="text-sm font-medium text-charcoal/70">
                     {item.seuil_alerte} {item.unite}
                   </p>
@@ -234,11 +406,15 @@ export default function Inventaire() {
               <div className="w-full h-2 bg-cream-dark rounded-full overflow-hidden">
                 <div
                   className={`h-full rounded-full transition-all ${isLowStock(item) ? 'bg-red-500' : 'bg-forest'}`}
-                  style={{ width: `${Math.min((item.stock_actuel / (item.seuil_alerte * 3)) * 100, 100)}%` }}
+                  style={{
+                    width: `${Math.min(
+                      (item.stock_actuel / Math.max(item.seuil_alerte * 3, 1)) * 100,
+                      100,
+                    )}%`,
+                  }}
                 />
               </div>
 
-              {/* Boutons rôle */}
               <div className="pt-3 border-t border-cream-dark flex gap-2">
                 {isAdmin && (
                   <button
@@ -260,9 +436,22 @@ export default function Inventaire() {
             </div>
           </div>
         ))}
+
+        {/* Carte "Ajouter" visible seulement pour les admins */}
+        {isAdmin && (
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="bg-white rounded-xl border-2 border-dashed border-cream-dark p-5 flex flex-col items-center justify-center gap-3 hover:border-forest/40 hover:bg-forest/5 transition-all min-h-[200px]"
+          >
+            <div className="w-12 h-12 rounded-xl bg-forest/10 flex items-center justify-center">
+              <Plus className="w-6 h-6 text-forest" />
+            </div>
+            <p className="text-charcoal/60 font-medium text-sm">Ajouter une ressource</p>
+          </button>
+        )}
       </div>
 
-      {filteredItems.length === 0 && (
+      {filteredItems.length === 0 && items.length > 0 && (
         <div className="text-center py-12">
           <Package className="w-12 h-12 text-charcoal/30 mx-auto mb-4" />
           <p className="text-charcoal/60">Aucun élément trouvé pour ce filtre</p>
@@ -275,6 +464,13 @@ export default function Inventaire() {
           mode={modal.mode}
           onClose={() => setModal(null)}
           onConfirm={(q) => void handleAdjust(q)}
+        />
+      )}
+
+      {showAddModal && (
+        <AddRessourceModal
+          onClose={() => setShowAddModal(false)}
+          onSuccess={handleRessourceAdded}
         />
       )}
     </div>
