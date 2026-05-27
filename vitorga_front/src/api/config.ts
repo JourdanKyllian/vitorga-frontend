@@ -1,6 +1,9 @@
 import { clearAuth, getAccessToken } from '../lib/auth-session';
 
-export const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000';
+const explicitApiUrl = import.meta.env.VITE_API_URL;
+
+export const API_URL =
+  explicitApiUrl ?? 'http://localhost';
 
 export const apiFetch = async (url: string, options?: RequestInit): Promise<Response> => {
   const res = await fetch(`${API_URL}${url}`, {

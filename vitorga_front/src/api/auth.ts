@@ -10,11 +10,16 @@ export interface LoginResponse {
 
 export const authApi = {
   login: async (email: string, password: string): Promise<LoginResponse> => {
-    const res = await fetch(`${API_URL}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-    });
+    let res: Response;
+    try {
+      res = await fetch(`${API_URL}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+    } catch {
+      throw new Error('Erreur réseau: backend inaccessible');
+    }
     if (!res.ok) throw new Error('Email ou mot de passe incorrect');
     return res.json();
   },
