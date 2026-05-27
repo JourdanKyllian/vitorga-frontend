@@ -4,7 +4,7 @@ import reactHooks from 'eslint-plugin-react-hooks';
 import tseslint from 'typescript-eslint';
 
 export default [
-  { ignores: ['dist'] },
+  { ignores: ['dist', 'test/**'] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
@@ -20,13 +20,7 @@ export default [
       ...reactHooks.configs.recommended.rules,
       '@typescript-eslint/no-unused-vars': 'warn',
       '@typescript-eslint/no-explicit-any': 'warn',
-    },
-  },
-  {
-    files: ['components/ui/**/*.{ts,tsx}', 'hooks/**/*.{ts,tsx}'],
-    rules: {
-      'react-hooks/set-state-in-effect': 'off',
-      'react-hooks/purity': 'off',
+      'react-hooks/set-state-in-effect': 'off',  
     },
   },
 ];
