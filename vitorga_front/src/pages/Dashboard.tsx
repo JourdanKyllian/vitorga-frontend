@@ -292,7 +292,9 @@ export default function Dashboard() {
     }
   }
 
-  useEffect(() => { void loadData() }, [])
+  useEffect(() => {
+    loadData().catch(console.error)
+  }, [])
 
   const handleParcelleAdded = (p: Parcelle) => {
     setParcelles(prev => [...prev, p])

@@ -21,7 +21,7 @@ export default function Login() {
       const response = await authApi.login(email, password)
       authApi.saveSession(response, rememberMe)
       navigate('/dashboard')
-    } catch (err) {
+    } catch {
       setError('Email ou mot de passe incorrect')
     } finally {
       setIsLoading(false)
