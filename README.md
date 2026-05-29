@@ -68,47 +68,6 @@ vitorga_front/
 
 ---
 
-## ⚙️ Installation
-
-### Prérequis
-
-- Node.js 20+
-- Backend Vitorga démarré sur `http://localhost:3000`
-
-### Développement local
-
-```bash
-git clone https://github.com/votre-org/vitorga-frontend
-cd vitorga-frontend/vitorga_front
-
-npm install
-npm run dev
-# → http://localhost:5173
-```
-
-### Variables d'environnement
-
-Crée un fichier `.env` :
-
-```env
-VITE_API_URL=http://localhost:3000
-```
-
----
-
-## 🐳 Docker
-
-```bash
-# Build et démarrage
-docker compose up --build -d
-
-# L'application est accessible sur http://localhost:8080
-```
-
-L'image finale utilise **nginx:1.27-alpine** (~25 MB) avec gzip activé et routing SPA configuré.
-
----
-
 ## 🔐 Gestion des rôles
 
 | Rôle | Inventaire | Dashboard | Admin Users |
