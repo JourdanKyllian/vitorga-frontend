@@ -30,6 +30,141 @@ Offrir aux viticulteurs un **tableau de bord moderne et intuitif** permettant de
 ---
 
 ## 🧩 Structure du projet
+vitorga_front/
+├── src/
+│   ├── api/                  # Couche d'appels HTTP vers le backend
+│   │   ├── config.ts         # apiFetch avec intercepteur 401
+│   │   ├── auth.ts           # login, register, getCurrentUser, getCurrentUserRole
+│   │   ├── ressources.ts     # CRUD ressources
+│   │   ├── users.ts          # CRUD users + toggleActive + updateRole
+│   │   ├── roles.ts          # GET /roles
+│   │   ├── parcelles.ts      # CRUD parcelles
+│   │   ├── vignes.ts         # CRUD vignes (avec parcelle_id)
+│   │   └── stats.ts          # dashboard KPIs, stock projections, rendements
+│   ├── components/
+│   │   ├── Layout.tsx        # Sidebar + navigation principale
+│   │   ├── ProtectedRoute.tsx # Validation JWT (expiry check)
+│   │   ├── KPICard.tsx       # Carte indicateur clé
+│   │   └── ChartCard.tsx     # Conteneur graphique
+│   ├── pages/
+│   │   ├── Login.tsx         # Authentification JWT
+│   │   ├── Dashboard.tsx     # KPIs + graphiques + modals parcelle/vigne
+│   │   ├── Inventaire.tsx    # Gestion stocks (rôles Admin/Ouvrier)
+│   │   └── AdminUsers.tsx    # Gestion utilisateurs + rôles
+│   ├── App.tsx               # Routes protégées
+│   └── main.tsx
+├── test/
+│   └── e2e/                  # Tests Playwright
+│       ├── setup.ts
+│       ├── login.spec.ts
+│       ├── dashboard.spec.ts
+│       ├── inventaire.spec.ts
+│       └── admin-users.spec.ts
+├── playwright.config.ts
+├── Dockerfile                # Multi-stage + nginx:1.27-alpine + distroless
+├── docker-compose.yml
+├── nginx.conf                # Config SPA routing
+└── .github/workflows/ci.yml
+
+---
+
+## ⚙️ Installation
+
+### Prérequis
+
+- Node.js 20+
+- Backend Vitorga démarré sur `http://localhost:3000`
+
+### Développement local
+
+```bash
+git clone https://github.com/votre-org/vitorga-frontend
+cd vitorga-frontend/vitorga_front
+
+npm install
+npm run dev
+# → http://localhost:5173
+```
+
+### Variables d'environnement
+
+Crée un fichier `.env` :
+
+```env
+VITE_API_URL=http://localhost:3000
+```
+
+---
+
+## 🐳 Docker
+
+```bash
+# Build et démarrage
+docker compose up --build -d
+
+# L'application est accessible sur http://localhost:8080
+```
+
+L'image finale utilise **nginx:1.27-alpine** (~25 MB) avec gzip activé et routing SPA configuré.
+
+---
+
+## 🔐 Gestion des rôles
+
+| Rôle | Inventaire | Dashboard | Admin Users |
+|---|---|---|---|
+| **Admin** | Ajouter + Retirer stock, Créer ressources | Créer parcelles + vignes | Accès complet |
+| **Ouvrier** | Retirer stock uniquement | Lecture seule | Non accessible |
+
+Le rôle est extrait directement du **payload JWT** stocké dans `localStorage`.
+
+---
+
+## 📊 Logique métier affichée
+
+### YieldCalculator
+Calcule le rendement par parcelle selon :
+- Âge de la vigne (`< 5 ans` : -30%, `5-15 ans` : -10%, `> 15 ans` : -5%)
+- Exposition (`SUD` : +10%, `EST` : +5%, `NORD` : -15%, `OUEST` : neutre)
+- Densité et poids moyen de grappe
+
+### StockProjectionCalculator
+Projette le stock après interventions `PLANIFIEE` et `EN_COURS` :
+- Affiche stock actuel vs stock projeté
+- Calcule une criticité (0-100%)
+- Déclenche une alerte si stock projeté ≤ seuil
+
+---
+
+## 🧪 Tests E2E
+
+```bash
+# Backend + BDD doivent tourner
+npm run test:e2e          # headless
+npm run test:e2e:headed   # avec navigateur visible
+npm run test:e2e:ui       # interface Playwright
+```
+
+**Couverture :**
+- Login (credentials, redirection, toggle password)
+- Dashboard (KPIs, dropdown parcelles, modals)
+- Inventaire (filtres, ressources, modal stock)
+- AdminUsers (liste, recherche, ajout utilisateur)
+
+---
+
+## 🔄 CI/CD
+
+Pipeline GitHub Actions (`.github/workflows/ci.yml`) :
+lint → build → e2e → docker-build → trivy-scan
+
+| Job | Description |
+|---|---|
+| **lint** | ESLint + TypeScript check |
+| **build** | `npm run build` + upload artifact |
+| **e2e** | Tests Playwright avec backend + PostgreSQL en service |
+| **docker-build** | Build image multi-stage |
+| **trivy-scan** | Scan vulnérabilités CRITICAL/HIGH |
 ## 🚀 Démarrage rapide
 
 > ⚠️ Le backend doit tourner en premier sur `http://localhost:80`
