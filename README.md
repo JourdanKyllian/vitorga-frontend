@@ -30,4 +30,16 @@ Offrir aux viticulteurs un **tableau de bord moderne et intuitif** permettant de
 ---
 
 ## 🧩 Structure du projet
+## 🚀 Démarrage rapide
 
+> ⚠️ Le backend doit tourner en premier sur `http://localhost:80`
+
+git clone https://github.com/JourdanKyllian/vitorga-frontend
+cd vitorga-frontend/vitorga_front
+cp .env.example .env
+docker compose up --build -d
+```
+
+**C'est tout.** L'application est disponible sur `http://localhost:8080`
+
+> **Prérequis** : Docker 24+ et Docker Compose v2+
