@@ -1,18 +1,17 @@
-version: '3.8'
-
 services:
   client:
     build:
       context: .
       target: production
     ports:
-      - "8080:80"
+      - "8080:3000"
     environment:
-      VITE_API_URL: ${VITE_API_URL:-http://localhost:3000}
+      BACKEND_URL: ${BACKEND_URL:-http://host.docker.internal:3000}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
     networks:
       - vitorga-network
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:80"]
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/login"]
       interval: 30s
       timeout: 5s
       retries: 3

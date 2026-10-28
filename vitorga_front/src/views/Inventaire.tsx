@@ -1,10 +1,12 @@
+'use client'
+
 import { useState, useEffect } from 'react'
 import {
   Package, Wrench, AlertTriangle, TrendingDown,
   Filter, Loader2, Plus, Minus, X,
 } from 'lucide-react'
 import { ressourcesApi, Ressource } from '../api/ressources'
-import { getCurrentUser, getCurrentUserRole } from '../api/auth'
+import { useSession } from '../components/SessionProvider'
 
 type FilterType = 'all' | 'ressource' | 'outil' | 'alerte'
 
@@ -228,8 +230,8 @@ export default function Inventaire() {
   const [modal, setModal] = useState<{ item: Ressource; mode: 'add' | 'remove' } | null>(null)
   const [showAddModal, setShowAddModal] = useState(false)
 
-  const user = getCurrentUser()
-  const isAdmin = getCurrentUserRole().toLowerCase() === 'admin'
+  const user = useSession()
+  const isAdmin = user?.role?.toLowerCase() === 'admin'
 
   useEffect(() => {
     const load = async () => {

@@ -1,52 +1,31 @@
-import { API_URL } from './config';
-import { clearAuth, isTokenValid, setAuth, type AuthUser } from '../lib/auth-session';
+import type { AuthUser } from '@/lib/session';
+import { apiFetch } from './config';
 
 export type { AuthUser };
 
-export interface LoginResponse {
-  accessToken: string;
-  user: AuthUser;
-}
-
 export const authApi = {
-  login: async (email: string, password: string): Promise<LoginResponse> => {
+  login: async (email: string, password: string, remember: boolean): Promise<AuthUser> => {
     let res: Response;
     try {
-      res = await fetch(`${API_URL}/auth/login`, {
+      res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, remember }),
       });
     } catch {
       throw new Error('Erreur réseau: backend inaccessible');
     }
-    if (!res.ok) throw new Error('Email ou mot de passe incorrect');
-    return res.json();
+    const data = (await res.json()) as { user?: AuthUser; message?: string };
+    if (!res.ok || !data.user) throw new Error(data.message ?? 'Email ou mot de passe incorrect');
+    return data.user;
   },
 
-  register: async (data: {
-    firstname: string;
-    lastname: string;
-    email: string;
-    password: string;
-  }): Promise<void> => {
-    const res = await fetch(`${API_URL}/auth/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
+  register: async (data: { firstname: string; lastname: string; email: string; password: string }): Promise<void> => {
+    const res = await apiFetch('/auth/register', { method: 'POST', body: JSON.stringify(data) });
     if (!res.ok) throw new Error('Erreur inscription');
   },
 
-  saveSession: (response: LoginResponse, remember: boolean) => {
-    setAuth(response.accessToken, response.user, remember);
+  logout: async (): Promise<void> => {
+    await fetch('/api/auth/logout', { method: 'POST' });
   },
-
-  logout: () => {
-    clearAuth();
-  },
-
-  isAuthenticated: () => isTokenValid(),
 };
-
-export { clearAuth, getAccessToken, getCurrentUser, getCurrentUserRole, isTokenValid } from '../lib/auth-session';

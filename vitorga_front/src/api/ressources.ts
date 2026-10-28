@@ -1,5 +1,4 @@
-import { getAccessToken } from '../lib/auth-session';
-import { API_URL, apiFetch } from './config';
+import { apiFetch } from './config';
 
 export interface Ressource {
   id: number;
@@ -14,11 +13,6 @@ export interface Ressource {
   updated_at: string;
 }
 
-const getHeaders = () => ({
-  'Content-Type': 'application/json',
-  Authorization: `Bearer ${getAccessToken() ?? ''}`,
-});
-
 export const ressourcesApi = {
   getAll: async (): Promise<Ressource[]> => {
     const res = await apiFetch('/ressource')
@@ -27,9 +21,8 @@ export const ressourcesApi = {
   },
 
   create: async (data: Partial<Ressource>): Promise<Ressource> => {
-    const res = await fetch(`${API_URL}/ressource`, {
+    const res = await apiFetch(`/ressource`, {
       method: 'POST',
-      headers: getHeaders(),
       body: JSON.stringify(data),
     });
     if (!res.ok) throw new Error('Erreur création ressource');
@@ -37,9 +30,8 @@ export const ressourcesApi = {
   },
 
   update: async (id: number, data: Partial<Ressource>): Promise<Ressource> => {
-    const res = await fetch(`${API_URL}/ressource/${id}`, {
+    const res = await apiFetch(`/ressource/${id}`, {
       method: 'PATCH',
-      headers: getHeaders(),
       body: JSON.stringify(data),
     });
     if (!res.ok) throw new Error('Erreur mise à jour ressource');
@@ -47,9 +39,8 @@ export const ressourcesApi = {
   },
 
   delete: async (id: number): Promise<void> => {
-    const res = await fetch(`${API_URL}/ressource/${id}`, {
+    const res = await apiFetch(`/ressource/${id}`, {
       method: 'DELETE',
-      headers: getHeaders(),
     });
     if (!res.ok) throw new Error('Erreur suppression ressource');
   },

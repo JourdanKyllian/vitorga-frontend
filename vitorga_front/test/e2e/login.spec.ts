@@ -6,5 +6,5 @@ test.beforeAll(async () => {
 });
 
 test.beforeEach(async ({ page }) => {
-  await page.evaluate(() => localStorage.clear());
+  await page.context().clearCookies();
 });*/

@@ -1,28 +1,40 @@
-# ============ STAGE 1 : BUILD ============
-FROM node:20-alpine AS builder
-
+# ============ STAGE 1 : DEPENDENCIES ============
+FROM node:22-alpine AS deps
 WORKDIR /app
-
 COPY package*.json ./
 RUN npm ci
 
+# ============ STAGE 2 : BUILD ============
+FROM node:22-alpine AS builder
+WORKDIR /app
+ENV NEXT_TELEMETRY_DISABLED=1
+COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run build
 
-# ============ STAGE 2 : PRODUCTION (nginx) ============
-FROM nginx:alpine AS production
+# ============ STAGE 3 : PRODUCTION ============
+FROM node:22-alpine AS production
 LABEL maintainer="vitorga"
+WORKDIR /app
+
+ENV NODE_ENV=production \
+    NEXT_TELEMETRY_DISABLED=1 \
+    PORT=3000 \
+    HOSTNAME=0.0.0.0
 
 RUN apk upgrade --no-cache \
-  && addgroup -g 1001 -S nginx-user \
-  && adduser -S nginx-user -u 1001
+  && rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx \
+  && addgroup -g 1001 -S nodejs \
+  && adduser -S nextjs -u 1001 -G nodejs
 
-COPY --from=builder /app/dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=builder /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-EXPOSE 80
+USER nextjs
+EXPOSE 3000
 
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
-  CMD wget -qO- http://localhost:80 || exit 1
+  CMD wget -qO- http://127.0.0.1:3000/login || exit 1
 
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["node", "server.js"]

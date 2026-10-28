@@ -1,3 +1,5 @@
+'use client'
+
 import { useState, useEffect } from 'react'
 import {
   Thermometer, MapPin, AlertTriangle,
@@ -13,7 +15,7 @@ import ChartCard from '../components/ChartCard'
 import { statsApi, DashboardKPIs, StockProjection, RendementParcelle } from '../api/stats'
 import { parcellesApi, Parcelle } from '../api/parcelles'
 import { vignesApi } from '../api/vignes'
-import { getCurrentUser, getCurrentUserRole } from '../api/auth'
+import { useSession } from '../components/SessionProvider'
 
 const climatData = [
   { mois: 'Jan', temperature: 5, humidite: 78 },
@@ -270,8 +272,8 @@ export default function Dashboard() {
   const [showAddParcelle, setShowAddParcelle] = useState(false)
   const [showAddVigne, setShowAddVigne] = useState(false)
 
-  const user = getCurrentUser()
-  const isAdmin = getCurrentUserRole().toLowerCase() === 'admin'
+  const user = useSession()
+  const isAdmin = user?.role?.toLowerCase() === 'admin'
 
   const loadData = async () => {
     try {

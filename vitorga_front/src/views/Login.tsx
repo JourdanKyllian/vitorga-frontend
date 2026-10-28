@@ -1,5 +1,7 @@
+'use client'
+
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useRouter } from 'next/navigation'
 import { Grape, Mail, Lock, Eye, EyeOff } from 'lucide-react'
 import { authApi } from '../api/auth'
 
@@ -10,7 +12,7 @@ export default function Login() {
   const [rememberMe, setRememberMe] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
-  const navigate = useNavigate()
+  const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -18,9 +20,9 @@ export default function Login() {
     setError('')
 
     try {
-      const response = await authApi.login(email, password)
-      authApi.saveSession(response, rememberMe)
-      navigate('/dashboard')
+      await authApi.login(email, password, rememberMe)
+      router.replace('/dashboard')
+      router.refresh()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur de connexion')
     } finally {

@@ -38,6 +38,7 @@ Thumbs.db
 .cache/
 .parcel-cache/
 .next/
+next-env.d.ts
 .nuxt/
 .svelte-kit/
 vite.svg

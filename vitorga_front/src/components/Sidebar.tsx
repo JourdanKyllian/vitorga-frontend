@@ -1,5 +1,9 @@
-import { NavLink, useNavigate } from 'react-router-dom'
+'use client'
+
+import Link from 'next/link'
+import { usePathname, useRouter } from 'next/navigation'
 import { authApi } from '../api/auth'
+import { useSession } from './SessionProvider'
 import { 
   LayoutDashboard, 
   Users, 
@@ -15,11 +19,15 @@ const navItems = [
 ]
 
 export default function Sidebar() {
-  const navigate = useNavigate()
+  const router = useRouter()
+  const pathname = usePathname()
+  const user = useSession()
+  const initials = `${user?.firstname?.[0] ?? ''}${user?.lastname?.[0] ?? ''}`.toUpperCase()
 
-  const handleLogout = () => {
-    authApi.logout()
-    navigate('/login', { replace: true })
+  const handleLogout = async () => {
+    await authApi.logout()
+    router.replace('/login')
+    router.refresh()
   }
 
   return (
@@ -40,19 +48,17 @@ export default function Sidebar() {
         <ul className="space-y-2">
           {navItems.map((item) => (
             <li key={item.path}>
-              <NavLink
-                to={item.path}
-                className={({ isActive }) =>
-                  `flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
-                    isActive
-                      ? 'bg-gold text-forest font-medium'
-                      : 'text-cream/80 hover:bg-forest-light hover:text-cream'
-                  }`
-                }
+              <Link
+                href={item.path}
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+                  pathname.startsWith(item.path)
+                    ? 'bg-gold text-forest font-medium'
+                    : 'text-cream/80 hover:bg-forest-light hover:text-cream'
+                }`}
               >
                 <item.icon className="w-5 h-5" />
                 <span>{item.label}</span>
-              </NavLink>
+              </Link>
             </li>
           ))}
         </ul>
@@ -61,11 +67,11 @@ export default function Sidebar() {
       <div className="p-4 border-t border-forest-light">
         <div className="flex items-center gap-3 px-4 py-3 mb-3">
           <div className="w-8 h-8 bg-gold/20 rounded-full flex items-center justify-center">
-            <span className="text-sm font-medium text-gold">JD</span>
+            <span className="text-sm font-medium text-gold">{initials}</span>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-cream truncate">Jean Dupont</p>
-            <p className="text-xs text-cream/60">Admin</p>
+            <p className="text-sm font-medium text-cream truncate">{user?.firstname} {user?.lastname}</p>
+            <p className="text-xs text-cream/60">{user?.role}</p>
           </div>
         </div>
         <button
