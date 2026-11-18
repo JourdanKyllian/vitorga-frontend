@@ -19,7 +19,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
           cache-dependency-path: ./vitorga_front/package-lock.json
 
@@ -30,7 +30,7 @@ jobs:
         run: npm run lint
 
       - name: TypeScript check
-        run: npx tsc --noEmit
+        run: npx next typegen && npx tsc --noEmit
 
   build:
     name: Build frontend
@@ -44,7 +44,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
           cache-dependency-path: ./vitorga_front/package-lock.json   
 
@@ -56,8 +56,10 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: dist
-          path: vitorga_front/dist/   
+          name: next-build
+          path: |
+            vitorga_front/.next/
+            !vitorga_front/.next/cache/   
 
   docker-build:
     name: Build image Docker
