@@ -114,8 +114,15 @@ vitorga_front/
 
 | Variable | Défaut | Description |
 |---|---|---|
-| `BACKEND_URL` | `http://localhost:3000` | URL de l’API NestJS, utilisée **côté serveur uniquement** |
+| `BACKEND_URL` | `http://localhost:3000` | URL de l’API NestJS, utilisée **côté serveur uniquement** (voir valeurs ci-dessous) |
 | `COOKIE_SECURE` | `false` | Passer à `true` en HTTPS pour ajouter l’attribut `Secure` aux cookies |
+
+Valeur de `BACKEND_URL` selon la façon dont tourne le backend :
+
+| Backend lancé avec… | Front en `npm run dev` (`.env.local`) | Front en Docker |
+|---|---|---|
+| `npm run start:dev` (Nest seul, port 3000) | `http://localhost:3000` | `http://host.docker.internal:3000` |
+| `docker compose up` (Nginx, port 80) | `http://localhost` | `http://host.docker.internal` *(défaut)* |
 
 Aucune variable n’est exposée au navigateur : `BACKEND_URL` est lue à l’exécution, la même image Docker fonctionne donc dans tous les environnements.
 
@@ -150,7 +157,7 @@ Projette le stock après interventions `PLANIFIEE` et `EN_COURS` :
 
 ## 💻 Développement local
 
-> ⚠️ Le backend NestJS doit tourner sur `http://localhost:3000`
+> ⚠️ Le backend doit tourner : `http://localhost:3000` s’il est lancé avec `npm run start:dev`, ou `http://localhost` (Nginx, port 80) s’il est lancé avec Docker — adapter `BACKEND_URL` dans `.env.local` (voir [Variables d’environnement](#️-variables-denvironnement)).
 
 ```bash
 cd vitorga_front
@@ -205,7 +212,7 @@ lint → build → docker-build → trivy-scan
 
 ## 🐳 Démarrage avec Docker
 
-> ⚠️ Le backend doit tourner en premier sur `http://localhost:3000`
+> ⚠️ Le backend doit tourner en premier avec son `docker compose` (exposé par Nginx sur `http://localhost`, port 80)
 
 ```bash
 git clone https://github.com/JourdanKyllian/vitorga-frontend
@@ -215,7 +222,7 @@ docker compose up --build -d
 
 L’application est disponible sur `http://localhost:8080`.
 
-Le conteneur joint l’API via `http://host.docker.internal:3000` par défaut ; surcharger avec `BACKEND_URL=... docker compose up` si besoin.
+Le conteneur joint l’API via `http://host.docker.internal` (Nginx du backend, port 80) par défaut. Si le backend tourne hors Docker avec `npm run start:dev`, surcharger : `BACKEND_URL=http://host.docker.internal:3000 docker compose up -d`.
 
 L’image finale (`node:22-alpine`) ne contient que le serveur `standalone` de Next.js, tourne avec un utilisateur non-root, sans npm, avec un healthcheck sur `/login`.
 
